@@ -1,0 +1,269 @@
+﻿@page "/StudentsPage"
+
+<PageTitle>Classes</PageTitle>
+
+@using TaskApp.Data
+@using TaskApp.Data.Models
+@using Microsoft.AspNetCore.Hosting;
+
+@inject StudentsService service
+@inject CountriesService CountriesService
+@inject ClasessService ClasessService
+@inject IHostingEnvironment Environment
+<button class="btn btn-primary" @onclick="Add">Add New</button>
+
+<br />
+@if (popup)
+{
+    <div class="modal" tabindex="-1" role="dialog" style="display:block">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="Closepopup">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <EditForm Model="@Studentobj" OnValidSubmit="@Insert">  
+      <div class="modal-body">
+                  
+                    <DataAnnotationsValidator />  
+                   @* <ValidationSummary />  *@
+                    <div class="form-group">  
+                        <label for="Name">Name: </label>  
+                        <InputText id="Name" class="form-control" @bind-Value="@Studentobj.Name" placeholder="Enter name"></InputText>  
+                        <ValidationMessage For="@(() => Studentobj.Name)" />  
+                    </div>  
+                     <div class="form-group">  
+                        <label for="Date">Birth Date: </label>  
+                        <InputDate id="Date" class="form-control" @bind-Value="@Studentobj.Date_Of_Birth" ></InputDate>  
+                        <ValidationMessage For="@(() => Studentobj.Date_Of_Birth)" />  
+                    </div>  
+
+                      <div class="form-group">  
+                        <label for="Country">Country: </label>  
+                        <InputSelect   id="Country" class="form-control" @bind-Value="@Studentobj.Country_Id" >
+                             @if (Studentobj.Id>0)
+                            {
+                              @foreach (var Country in CountriesList)
+                                {
+                                    if (Studentobj.Country_Id==Country.Id)
+                                    {
+                                        <option selected value="@Country.Id">@Country.Name</option>
+                                    }else
+                                    {
+                                        <option value="@Country.Id">@Country.Name</option>
+                                    }
+                                    
+                                }
+                            }else
+                            {
+                                
+                                 @foreach (var Country in CountriesList)
+                                {
+                                    <option value="@Country.Id">@Country.Name</option>
+                                }    
+                            }
+                        </InputSelect> 
+                        
+                              <div hidden="@(!ceckcountry)"  class="validation-message">Country is required.</div> 
+                        
+                      
+                    </div>  
+
+                     <div class="form-group">  
+                        <label for="Clas">Class: </label>  
+                        <InputSelect   id="Clas" class="form-control"  @bind-Value="@Studentobj.Class_Id" >
+                            @if (Studentobj.Id>0)
+                            {
+                                @foreach (var Clas in ClassesList)
+                                {
+                                    if (Studentobj.Class_Id==Clas.Id)
+                                    {
+                                        <option selected value="@Clas.Id">@Clas.Class_Name</option>
+                                    }else
+                                    {
+                                         <option value="@Clas.Id">@Clas.Class_Name</option>
+                                    }
+                                   
+                                }
+                                
+                            }else
+                            {
+                               
+                                 @foreach (var Clas in ClassesList)
+                                {
+                                    <option value="@Clas.Id">@Clas.Class_Name</option>
+                                }
+                            }
+                              
+                        </InputSelect>  
+                       
+                              <div  hidden="@(!ceckClass)" class="validation-message">Class is required.</div> 
+                       
+                    </div>  
+                    
+                     <div style="margin-top:20px" class="form-group">  
+                        <label for="Image">Image: </label>  
+                         <InputFile OnChange="@UploadFile" />
+                         <p>
+                             <br>
+                             <img  src="@ImgUrl" style="width:100px;height:100px" />
+                             <br>
+                         </p>
+                        
+                    </div>  
+                   
+                   
+                
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="Closepopup">Close</button>
+      </div>
+      </EditForm> 
+    </div>
+  </div>
+</div>
+}
+
+<p></p>
+<table class="table table-bordered table-responsive table-striped">
+    <thead>
+        <tr>
+            <th scope="col">Id</th>
+            <th scope="col">Name</th>
+            <th scope="col">Created Date</th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if(List != null && List.Count()>0)
+        {
+            @foreach(var  Item in List)
+            {
+                <tr>
+                    <th scope="row">@Item.Id</th>
+                    
+                    <td>@Item.Name</td>
+                    <td><img  src="@($"/UploadFiles/{Item.Image}")" style="width:70px;height:70px" /></td>
+                    <td>@Item.CreatedDate.ToString("dd/MM/yyyy")</td>
+                    
+                    <td>
+                       @* <a href="/update/@post.PostId" class="btn btn-warning">Update</a>*@
+                        <button class="btn btn-primary" @onclick="() => Update(Item)">Update</button>
+                        <button class="btn btn-danger" @onclick="() => Delete(Item)">Delete</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+
+@code {
+    Students  Studentobj = new Students();
+    List<Students> List = new List<Students>();
+    List<Countries> CountriesList = new List<Countries>();
+    List<Classes> ClassesList = new List<Classes>();
+
+    bool ceckcountry = false;
+    bool ceckClass = false;
+    bool popup = false;
+
+    string ImgUrl;
+
+    void showpopup(){
+        popup = true;
+
+    }
+    void Closepopup(){
+        popup = false;
+
+    }
+
+    async Task GetlIST(){
+        List = await service.GetListAsync();
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetlIST();
+        CountriesList = await CountriesService.GetListAsync();
+        ClassesList=    await ClasessService.GetListAsync();
+    }
+
+    async void Insert()
+    {
+        if (!(Studentobj.Country_Id>0))
+        {
+            ceckcountry = true;
+        }else
+        {
+            ceckcountry = false;
+        }
+
+        if (!(Studentobj.Class_Id>0))
+        {
+            ceckClass = true;
+        }else
+        {
+            ceckClass = false;
+        }
+
+        if (Studentobj.Class_Id>0 && Studentobj.Country_Id>0)
+        {
+            if (Studentobj.Id>0)
+            {
+                await service.UpdateAsync(Studentobj);
+                
+            }else
+            {
+                Studentobj.Id = 0;
+                await service.AddAsync(Studentobj);
+            }
+
+            Closepopup();
+            await GetlIST();
+            StateHasChanged();
+        }
+
+    }
+
+    void Update(Students obj)
+    {
+        Studentobj = obj;
+        ImgUrl = $"/UploadFiles/{Studentobj.Image}";
+        showpopup();
+
+    }
+
+    void Add()
+    {
+        
+        Studentobj = new Students();
+        ImgUrl = "";
+        showpopup();
+
+    }
+
+    async Task Delete(Students Obj)
+    {
+        await service.DeleteAsync(Obj);
+        await GetlIST();
+    }
+
+   
+
+    private async Task UploadFile(InputFileChangeEventArgs e)
+    {
+       Studentobj.Image =$"{DateTime.Now.Ticks.ToString()}{MimeTypes.MimeTypeMap.GetExtension(e.File.ContentType)}";
+        var path = Path.Combine(Environment.WebRootPath,  "UploadFiles",Studentobj.Image );
+
+        await using FileStream fs = new(path, FileMode.Create);
+        await e.File.OpenReadStream().CopyToAsync(fs);
+        ImgUrl = $"/UploadFiles/{Studentobj.Image}";
+    }
+
+}

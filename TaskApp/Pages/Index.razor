@@ -1,0 +1,48 @@
+﻿@page "/"
+
+@using TaskApp.Data
+@using TaskApp.Data.Models
+@inject Microsoft.JSInterop.IJSRuntime JSRuntime
+@inject StatisticsService service
+<PageTitle>Index</PageTitle>
+
+
+    <p>Students Per Class</p>
+    <div style="width:100%;height:500px" id="chartdiv"></div>
+
+    <p>Students Per Country</p>
+    <div style="width:100%;height:500px" id="chartdiv2"></div>
+    <p>Average Age Of Students</p>
+    <div class="numberCircle">@Average</div>
+
+
+@code{
+    List<Studentsperclass> studentclass = new List<Studentsperclass>();
+    List<Studentspercountry> studentcountry = new List<Studentspercountry>();
+    double Average;
+
+    protected override async Task OnInitializedAsync()
+    {
+         Average = await service.StudentsAvargeAge();
+
+    }
+
+    protected override async Task  OnAfterRenderAsync(bool firstRender)
+    {
+
+        if (firstRender)
+        {
+            studentclass = await service.Studentsperclass();
+            studentcountry = await service.Studentspercountry();
+            
+
+            await JSRuntime.InvokeVoidAsync("piechart",studentclass);
+
+            await JSRuntime.InvokeVoidAsync("piechart2",studentcountry);
+        }
+    }
+
+}
+
+
+

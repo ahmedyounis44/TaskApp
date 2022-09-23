@@ -1,0 +1,139 @@
+﻿@page "/CountriesPage"
+
+<PageTitle>Classes</PageTitle>
+
+@using TaskApp.Data
+@using TaskApp.Data.Models
+
+@inject CountriesService service
+<button class="btn btn-primary" @onclick="Add">Add New</button>
+
+<br />
+@if (popup)
+{
+    <div class="modal" tabindex="-1" role="dialog" style="display:block">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="Closepopup">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <EditForm Model="@Countryobj" OnValidSubmit="@Insert">  
+      <div class="modal-body">
+                  
+                    <DataAnnotationsValidator />  
+                   @* <ValidationSummary />  *@
+                    <div class="form-group">  
+                        <label for="Name">Name: </label>  
+                        <InputText id="Name" class="form-control" @bind-Value="@Countryobj.Name" placeholder="Enter name"></InputText>  
+                        <ValidationMessage For="@(() => Countryobj.Name)" />  
+                    </div>  
+                    
+                   
+                    
+                
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="Closepopup">Close</button>
+      </div>
+      </EditForm> 
+    </div>
+  </div>
+</div>
+}
+
+<p></p>
+<table class="table table-bordered table-responsive table-striped">
+    <thead>
+        <tr>
+            <th scope="col">Id</th>
+            <th scope="col">Name</th>
+            <th scope="col">Created Date</th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if(List != null && List.Count()>0)
+        {
+            @foreach(var  Item in List)
+            {
+                <tr>
+                    <th scope="row">@Item.Id</th>
+                    <td>@Item.Name</td>
+                    <td>@Item.CreatedDate.ToString("dd/MM/yyyy")</td>
+                    
+                    <td>
+                       @* <a href="/update/@post.PostId" class="btn btn-warning">Update</a>*@
+                        <button class="btn btn-primary" @onclick="() => Update(Item)">Update</button>
+                        <button class="btn btn-danger" @onclick="() => Delete(Item)">Delete</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+
+@code {
+    Countries  Countryobj = new Countries();
+    List<Countries> List = new List<Countries>();
+    bool popup = false;
+
+    void showpopup(){
+        popup = true;
+
+    }
+    void Closepopup(){
+        popup = false;
+
+    }
+
+    async Task GetlIST(){
+        List = await service.GetListAsync();
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetlIST();
+    }
+
+    async void Insert()
+    {
+        if (Countryobj.Id>0)
+        {
+            await service.UpdateAsync(Countryobj);
+        }else
+        {
+            Countryobj.Id = 0;
+            await service.AddAsync(Countryobj);
+        }
+
+        Closepopup();
+        await GetlIST();
+    }
+
+     void Update(Countries obj)
+    {
+        Countryobj = obj;
+        showpopup();
+
+    }
+
+     void Add()
+    {
+        Countryobj = new Countries();
+        showpopup();
+       
+    }
+
+     async Task Delete(Countries Obj)
+    {
+       await service.DeleteAsync(Obj);
+        await GetlIST();
+    }
+
+}
